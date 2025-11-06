@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phishing URL Detector</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Phishing Website Detection Tool</h1>
+        <form method="POST" class="url-form">
+            <input type="text" name="url" placeholder="Enter website URL" required>
+            <select name="mode">
+                <option value="both">Use Rule-Based & ML</option>
+            </select>
+            <button type="submit">Check Now</button>
+        </form>
+
+        {% if result %}
+        <div class="result-box">
+            <h2>Detection Result</h2>
+            <p><strong>🔗 URL:</strong> {{ result.url }}</p>
+            <p><strong>🧠 ML-Based:</strong> {{ result.ml }}</p>
+            <p><strong>🛡️ Rule-Based:</strong> {{ result.rule }} <em>({{ result.rule_reason }})</em></p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

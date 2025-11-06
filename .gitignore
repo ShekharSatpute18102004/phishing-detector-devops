@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.venv/
+venv/
+.env
+model.pkl
+vectorizer.pkl
+*.csv
+.DS_Store
+.vscode/
