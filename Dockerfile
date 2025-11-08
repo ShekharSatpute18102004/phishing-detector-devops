@@ -9,7 +9,7 @@ COPY app.py .
 COPY phishing_detector.py .
 
 # Skip model copy for now (uncomment when available)
-# COPY model.pkl vectorizer.pkl ./
+COPY model.pkl vectorizer.pkl ./
 
-EXPOSE 8000
+EXPOSE 5000
 CMD ["python", "app.py"]
