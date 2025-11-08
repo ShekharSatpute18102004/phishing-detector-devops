@@ -17,7 +17,8 @@ pipeline {
             steps {
                 script {
                     echo "🛠 Building Docker image..."
-                    sh 'docker build -t ${IMAGE_NAME}:latest .'
+                    sh 'docker run -d -p 8000:8000 --name phishing-container ${IMAGE_NAME}:latest'
+
                 }
             }
         }
