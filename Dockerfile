@@ -1,21 +1,23 @@
-# Base image
+# =============================
+# Phishing Detector - Dockerfile
+# =============================
+
 FROM python:3.10-slim
 
-# Set working directory
+# Set working directory inside container
 WORKDIR /app
 
-# Copy requirement file and install dependencies
+# Copy dependencies and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all source code
-COPY . .
+# Copy only the necessary project files
+COPY app.py .
+COPY phishing_detector.py .
+COPY model.pkl vectorizer.pkl ./
 
-# Train model at build time (optional, but safe)
-RUN python -c "from phishing_detector import train_model; train_model()"
-
-# Expose port
+# Expose Flask port
 EXPOSE 8000
 
-# Command to run your app
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]
+# Start Flask application
+CMD ["python", "app.py"]
