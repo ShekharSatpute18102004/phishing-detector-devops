@@ -29,7 +29,8 @@ pipeline {
                     // Stop existing container if any
                     sh 'docker ps -q --filter "name=${CONTAINER_NAME}" | grep -q . && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true'
                     // Start new container
-                    sh 'docker run -d -p 5000:5000 --name ${CONTAINER_NAME} ${IMAGE_NAME}:latest'
+                   sh 'docker build -t ${IMAGE_NAME}:latest ${WORKSPACE}'
+
                 }
             }
         }
