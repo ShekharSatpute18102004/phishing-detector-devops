@@ -30,7 +30,7 @@ pipeline {
                     // Stop existing container if any
                     sh 'docker ps -q --filter "name=${CONTAINER_NAME}" | grep -q . && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true'
                    // Start new container on port 5000
-                    sh 'docker run -d -p 5000:5000 --name phishing-container ${IMAGE_NAME}:latest'
+                    sh 'docker run -d -p 8000:8000 --name phishing-container ${IMAGE_NAME}:latest'
 
                 }
             }
@@ -38,7 +38,7 @@ pipeline {
 
         stage('Post Build') {
             steps {
-                echo "✅ Deployment Successful! Access app at http://localhost:5000"
+                echo "✅ Deployment Successful! Access app at http://localhost:8000"
             }
         }
     }
