@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/<your-username>/<repo-name>.git'
+                git branch: 'main', url: 'https://github.com/ShekharSatpute18102004/phishing-detector-devops.git'
             }
         }
 
