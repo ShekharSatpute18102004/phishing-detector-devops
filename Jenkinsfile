@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "phishing-detector"
+        CONTAINER_NAME = "phishing-container"
     }
 
     stages {
@@ -15,27 +16,34 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${IMAGE_NAME}:latest")
+                    echo "🛠 Building Docker image..."
+                    sh 'docker build -t ${IMAGE_NAME}:latest .'
                 }
             }
         }
 
-        stage('Run Container') {
+        stage('Run Docker Container') {
             steps {
                 script {
-                    // Stop & remove any old running container
-                    sh 'docker ps -q --filter "name=phishing-container" | grep -q . && docker stop phishing-container && docker rm phishing-container || true'
-
-                    // Run new container
-                    sh 'docker run -d -p 5000:5000 --name phishing-container ${IMAGE_NAME}:latest'
+                    echo "🚀 Running Docker container..."
+                    // Stop existing container if any
+                    sh 'docker ps -q --filter "name=${CONTAINER_NAME}" | grep -q . && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true'
+                    // Start new container
+                    sh 'docker run -d -p 5000:5000 --name ${CONTAINER_NAME} ${IMAGE_NAME}:latest'
                 }
             }
         }
 
         stage('Post Build') {
             steps {
-                echo "✅ Build completed successfully! App running on http://localhost:5000"
+                echo "✅ Deployment Successful! Access app at http://localhost:8000"
             }
+        }
+    }
+
+    post {
+        failure {
+            echo "❌ Build failed. Check the console output for errors."
         }
     }
 }
