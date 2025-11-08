@@ -11,5 +11,5 @@ COPY phishing_detector.py .
 # Skip model copy for now (uncomment when available)
 #COPY model.pkl vectorizer.pkl ./
 
-EXPOSE 5000
+EXPOSE 8000
 CMD ["python", "app.py"]
