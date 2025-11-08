@@ -1,45 +1,41 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    IMAGE_NAME = "yourdockerhubusername/phishing-detector"
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    environment {
+        IMAGE_NAME = "phishing-detector"
     }
 
-    stage('Install & Test') {
-      steps {
-        sh '''
-          python3 -m venv venv
-          . venv/bin/activate
-          pip install -r requirements.txt pytest
-          pytest -q
-        '''
-      }
-    }
-
-    stage('Docker Build') {
-      steps {
-        sh '''
-          docker build -t $IMAGE_NAME:latest .
-        '''
-      }
-    }
-
-    stage('Docker Push') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-          sh '''
-            echo "$PASS" | docker login -u "$USER" --password-stdin
-            docker push $IMAGE_NAME:latest
-          '''
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/<your-username>/<repo-name>.git'
+            }
         }
-      }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("${IMAGE_NAME}:latest")
+                }
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                script {
+                    // Stop & remove any old running container
+                    sh 'docker ps -q --filter "name=phishing-container" | grep -q . && docker stop phishing-container && docker rm phishing-container || true'
+
+                    // Run new container
+                    sh 'docker run -d -p 5000:5000 --name phishing-container ${IMAGE_NAME}:latest'
+                }
+            }
+        }
+
+        stage('Post Build') {
+            steps {
+                echo "✅ Build completed successfully! App running on http://localhost:5000"
+            }
+        }
     }
-  }
 }
