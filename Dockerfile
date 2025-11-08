@@ -1,15 +1,17 @@
+# Use Python base image
 FROM python:3.10-slim
 
+# Set working directory
 WORKDIR /app
 
-COPY requirements.txt .
+# Copy all project files into container
+COPY . /app
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
-COPY phishing_detector.py .
-
-# Skip model copy for now (uncomment when available)
-#COPY model.pkl vectorizer.pkl ./
-
+# Expose Flask port
 EXPOSE 8000
+
+# Run the app
 CMD ["python", "app.py"]
