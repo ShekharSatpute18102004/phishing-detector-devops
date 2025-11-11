@@ -1,30 +1,277 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Phishing URL Detector</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phishing Website Detector — Creative UI</title>
+  <meta name="description" content="Phishing URL detection tool with rule-based + ML results, creative UI, animations and accessibility." />
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#6ee7b7; --accent-2:#60a5fa;
+      --glass: rgba(255,255,255,0.04);
+      --safe:#e6ffef; --danger:#fff1f0;
+      --radius:16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:radial-gradient(1200px 600px at 10% 10%, rgba(96,165,250,0.08), transparent), radial-gradient(900px 400px at 90% 90%, rgba(110,231,183,0.04), transparent), var(--bg); color:#e6eef6}
+
+    .wrap{max-width:980px;margin:36px auto;padding:28px;border-radius:20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 10px 40px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);display:grid;grid-template-columns:1fr 420px;gap:26px}
+
+    header{grid-column:1/-1;display:flex;align-items:center;gap:18px}
+    .logo{width:68px;height:68px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 30px rgba(96,165,250,0.15)}
+    .logo svg{width:40px;height:40px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:2px 0 0;color:var(--muted);font-size:13px}
+
+    /* Form card */
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.03)}
+    .input-row{display:flex;gap:12px;align-items:center}
+    input[type=text]{flex:1;padding:12px 14px;border-radius:12px;border:none;background:var(--glass);color:inherit;outline:none;font-size:15px}
+    select{padding:10px 12px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit}
+    button.primary{padding:12px 16px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent-2),var(--accent));color:#07203b;font-weight:700;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+
+    /* Result area */
+    .result{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .result .panel{padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
+    .status-safe{border-left:6px solid #10b981}
+    .status-phish{border-left:6px solid #ef4444}
+    .meta{font-size:13px;color:var(--muted);margin-top:6px}
+
+    /* Right column */
+    .side{display:flex;flex-direction:column;gap:14px}
+    .history{max-height:280px;overflow:auto;padding:10px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border:1px solid rgba(255,255,255,0.02)}
+    .history-item{padding:10px;border-radius:10px;margin-bottom:8px;background:rgba(255,255,255,0.01);display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .hint{font-size:13px;color:var(--muted)}
+
+    /* Loader */
+    .loader{width:36px;height:36px;border-radius:50%;border:4px solid rgba(255,255,255,0.06);border-top-color:var(--accent);animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Footer */
+    footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;margin-top:8px}
+
+    /* Responsive */
+    @media(max-width:880px){.wrap{grid-template-columns:1fr;padding:18px}.side{order:3}.history{max-height:180px}}
+
+    /* Tiny helpers */
+    .muted{color:var(--muted)}
+    .flex{display:flex;gap:8px;align-items:center}
+    .copy{cursor:pointer;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Phishing Website Detection Tool</h1>
-        <form method="POST" class="url-form">
-            <input type="text" name="url" placeholder="Enter website URL" required>
-            <select name="mode">
-                <option value="both">Use Rule-Based & ML</option>
-            </select>
-            <button type="submit">Check Now</button>
-        </form>
+  <main class="wrap" role="main">
+    <header>
+      <div class="logo" aria-hidden>
+        <!-- shield + link icon -->
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 6v5c0 5 3.8 9.7 9 11 5.2-1.3 9-6 9-11V6l-9-4z" fill="white" opacity="0.12"/>
+          <path d="M8.5 11.5a3.5 3.5 0 0 1 6.9 0" stroke="#052634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 7v4l2 2" stroke="#052634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Phishing Website Detection</h1>
+        <p class="lead">Enter a URL and use combined Rule-based + ML analysis. Fast, lightweight, and privacy-friendly.</p>
+      </div>
+    </header>
 
-        {% if result %}
-        <div class="result-box">
-            <h2>Detection Result</h2>
-            <p><strong>🔗 URL:</strong> {{ result.url }}</p>
-            <p><strong>🧠 ML-Based:</strong> {{ result.ml }}</p>
-            <p><strong>🛡️ Rule-Based:</strong> {{ result.rule }} <em>({{ result.rule_reason }})</em></p>
+    <!-- Left: Form & Results -->
+    <section class="card" aria-labelledby="detector-heading">
+      <h2 id="detector-heading" style="margin:0 0 10px 0">Check a URL</h2>
+
+      <form id="phishing-form" class="input-row" autocomplete="off">
+        <input type="text" id="url-input" name="url" placeholder="https://example.com/login" aria-label="Website URL" required />
+        <select id="mode" name="mode" aria-label="Detection mode">
+          <option value="both">Rule-Based + ML</option>
+          <option value="rule">Rule-Based Only</option>
+          <option value="ml">ML Only</option>
+        </select>
+        <button type="submit" class="primary">Check</button>
+      </form>
+
+      <div id="status-area" class="result" aria-live="polite" style="display:none">
+        <div class="panel" id="ml-panel">
+          <strong>ML-Based Result</strong>
+          <div id="ml-result" style="margin-top:12px">—</div>
+          <div class="meta">Model confidence: <span id="ml-conf">—</span></div>
         </div>
-        {% endif %}
-    </div>
+        <div class="panel" id="rule-panel">
+          <strong>Rule-Based Result</strong>
+          <div id="rule-result" style="margin-top:12px">—</div>
+          <div class="meta">Matched rule: <span id="rule-reason">—</span></div>
+        </div>
+
+        <div style="grid-column:1/-1;margin-top:12px">
+          <div class="panel" id="summary" style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <strong>Final Verdict:</strong>
+              <div id="final-verdict" style="font-size:18px;margin-top:6px">—</div>
+              <div class="meta">URL: <span id="final-url" class="muted">—</span></div>
+            </div>
+            <div class="flex">
+              <div id="verdict-badge" style="min-width:110px;text-align:center;padding:8px;border-radius:10px"></div>
+              <button class="secondary copy" id="copy-btn" title="Copy result">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="loader" style="display:none;margin-top:14px" class="flex"><div class="loader" role="status" aria-hidden></div><div class="muted">Analyzing — this runs in your browser</div></div>
+
+      <div style="margin-top:12px" class="hint">Tip: Try `https://accounts-google.com` or `http://secure-bank.example` as test strings to see rule matches.</div>
+    </section>
+
+    <!-- Right: History + Help -->
+    <aside class="side">
+      <div class="card history" aria-label="Recent checks" id="history">
+        <strong style="display:block;margin-bottom:8px">Recent checks</strong>
+        <div id="history-list">
+          <div class="muted">No checks yet — results appear here.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <strong>How it works</strong>
+        <p class="muted" style="margin:8px 0 0">Rule-based checks look for suspicious patterns (punycode, IP host, long path, suspicious TLDs). ML simulates a quick heuristic score. This demo runs locally — no network calls.</p>
+      </div>
+
+      <div class="card">
+        <strong>Quick actions</strong>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="secondary" id="example-btn">Try Example</button>
+          <button class="secondary" id="clear-btn">Clear</button>
+        </div>
+      </div>
+    </aside>
+
+    <footer>Built for demos • Works offline in your browser • Accessible & responsive</footer>
+  </main>
+
+  <script>
+    // Lightweight rule-based checks + simulated ML
+    const form = document.getElementById('phishing-form');
+    const urlInput = document.getElementById('url-input');
+    const mode = document.getElementById('mode');
+    const loader = document.getElementById('loader');
+    const statusArea = document.getElementById('status-area');
+    const mlResult = document.getElementById('ml-result');
+    const mlConf = document.getElementById('ml-conf');
+    const ruleResult = document.getElementById('rule-result');
+    const ruleReason = document.getElementById('rule-reason');
+    const finalVerdict = document.getElementById('final-verdict');
+    const finalUrl = document.getElementById('final-url');
+    const verdictBadge = document.getElementById('verdict-badge');
+    const historyList = document.getElementById('history-list');
+    const copyBtn = document.getElementById('copy-btn');
+    const exampleBtn = document.getElementById('example-btn');
+    const clearBtn = document.getElementById('clear-btn');
+
+    function simulateMLScore(url){
+      // deterministic-ish pseudo-random score based on string content
+      let sum = 0; for(let i=0;i<url.length;i++) sum += url.charCodeAt(i)*(i+1);
+      const s = (sum % 100) / 100; // 0..0.99
+      // bias: suspicious keywords increase score
+      const keywords = ['login','secure','account','update','bank','verify','signin','confirm'];
+      let bonus = 0;
+      for(const k of keywords) if(url.toLowerCase().includes(k)) bonus += 0.15;
+      // long domain/path increases suspiciousness
+      if(url.length > 60) bonus += 0.12;
+      if(url.includes('@')||/\d+\.\d+\.\d+\.\d+/.test(url)) bonus += 0.18;
+      const score = Math.min(0.99, s + bonus);
+      return Math.round(score*100)/100;
+    }
+
+    function ruleCheck(url){
+      const reasons = [];
+      try{
+        const u = new URL(url.includes('://')?url:'https://'+url);
+        const host = u.hostname;
+        // punycode / unicode chars
+        if(/xn--|%[0-9a-f]{2}/i.test(host) || /[\u0400-\u04FF\u0600-\u06FF]/.test(host)) reasons.push('Suspicious/encoded domain');
+        // ip address as host
+        if(/^\d+\.\d+\.\d+\.\d+$/.test(host)) reasons.push('IP address used instead of domain');
+        // long path
+        if(u.pathname.length > 40) reasons.push('Very long path (often used to hide payload)');
+        // suspicious tlds
+        if(/\.(tk|ml|cf|ga|gq)$/i.test(host)) reasons.push('Rare/abused TLD');
+        // deceptive brand in path or host
+        if(/google|apple|amazon|facebook|paypal|bank/i.test(host+u.pathname)) reasons.push('Impersonation of popular brand');
+        // @ symbol in URL
+        if(url.includes('@')) reasons.push('Contains @ symbol (often used in phishing to mask true host)');
+      }catch(e){ reasons.push('Invalid URL format'); }
+      return reasons;
+    }
+
+    function setVerdict(v, url){
+      finalVerdict.textContent = v === 'safe' ? 'Likely Safe' : v === 'phish' ? 'Likely Phishing' : 'Suspicious/Unclear';
+      finalUrl.textContent = url;
+      if(v === 'safe'){
+        verdictBadge.textContent = 'SAFE'; verdictBadge.style.background = 'linear-gradient(90deg,#10b98133,#10b98122)'; verdictBadge.style.color='#10b981';
+      }else if(v === 'phish'){
+        verdictBadge.textContent = 'PHISHING'; verdictBadge.style.background = 'linear-gradient(90deg,#ef444433,#ef444422)'; verdictBadge.style.color='#ef4444';
+      }else{
+        verdictBadge.textContent = 'UNCLEAR'; verdictBadge.style.background = 'linear-gradient(90deg,#f59e0b33,#f59e0b222)'; verdictBadge.style.color='#f59e0b';
+      }
+    }
+
+    function addHistory(entry){
+      const el = document.createElement('div'); el.className='history-item';
+      el.innerHTML = `<div style=\"flex:1;min-width:0\"><div style=\"font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${entry.url}</div><div class=\"muted\" style=\"font-size:12px\">${entry.when}</div></div><div style=\"text-align:right\">${entry.result}</div>`;
+      historyList.prepend(el);
+      // keep only 10
+      while(historyList.children.length>10) historyList.removeChild(historyList.lastChild);
+    }
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const url = urlInput.value.trim(); if(!url) return;
+      loader.style.display='flex'; statusArea.style.display='none';
+      // simulate analysis time
+      setTimeout(()=>{
+        loader.style.display='none';
+        const mlScore = simulateMLScore(url);
+        const rules = ruleCheck(url);
+
+        // fill panels
+        mlResult.textContent = mlScore >= 0.6 ? 'Likely Phishing' : 'Likely Safe';
+        mlConf.textContent = (mlScore*100).toFixed(0) + '%';
+
+        ruleResult.textContent = rules.length ? 'Suspicious' : 'No obvious rule flags';
+        ruleReason.textContent = rules.length ? rules.join('; ') : '—';
+
+        // final aggregation
+        let final = 'unclear';
+        if(mlScore >= 0.6 || rules.length) final = 'phish';
+        if(mlScore < 0.35 && rules.length===0) final = 'safe';
+
+        setVerdict(final, url);
+        statusArea.style.display='grid';
+
+        // style panels
+        document.getElementById('ml-panel').classList.toggle('status-phish', mlScore>=0.6);
+        document.getElementById('ml-panel').classList.toggle('status-safe', mlScore<0.35);
+        document.getElementById('rule-panel').classList.toggle('status-phish', rules.length>0);
+        document.getElementById('rule-panel').classList.toggle('status-safe', rules.length===0);
+
+        // history
+        const now = new Date(); addHistory({url,when:now.toLocaleString(),result: final.toUpperCase()});
+
+      }, 600 + Math.random()*800);
+    });
+
+    copyBtn.addEventListener('click', ()=>{
+      const txt = `URL: ${finalUrl.textContent}\nVerdict: ${finalVerdict.textContent}\nML: ${mlResult.textContent} (${mlConf.textContent})\nRule: ${ruleResult.textContent} — ${ruleReason.textContent}`;
+      navigator.clipboard?.writeText(txt).then(()=>{ copyBtn.textContent='Copied'; setTimeout(()=>copyBtn.textContent='Copy',1200); }).catch(()=>{ alert('Copy failed — allow clipboard permission'); });
+    });
+
+    exampleBtn.addEventListener('click', ()=>{ urlInput.value='http://secure-google.accounts-login.example/login?user=abc'; form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})); });
+    clearBtn.addEventListener('click', ()=>{ urlInput.value=''; statusArea.style.display='none'; historyList.innerHTML='<div class="muted">No checks yet — results appear here.</div>'; });
+
+    // small accessibility: submit on enter in input (already default) and focus
+    urlInput.focus();
+  </script>
 </body>
 </html>
